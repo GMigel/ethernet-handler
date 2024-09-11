@@ -3,7 +3,7 @@ CC       =gcc
 CPPFLAGS =-I.
 CFLAGS 	 =-W -Wall
 # -ansi -pedantic
-LDFLAGS  = #-lhiredis
+LDFLAGS  =-lhiredis
 SOURCES  =$(wildcard *.c)
 
 $(TARGET):
