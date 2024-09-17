@@ -1,4 +1,4 @@
-TARGET   =eth-server
+TARGET   =ethernet-server
 CC       =gcc
 CPPFLAGS =-I.
 CFLAGS 	 =-W -Wall
