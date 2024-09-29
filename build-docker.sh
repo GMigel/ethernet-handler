@@ -1,2 +1,2 @@
 #!/bin/bash
-docker build -t eth-server .
+docker build -t ethernet-server .
