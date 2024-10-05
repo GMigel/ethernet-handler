@@ -3,9 +3,8 @@ Debug/ethernet_server
 Debug/ethernet_server.d
 Debug/ethernet_server.o
 
-client/eth-client
-server/eth-server
-
+server/ethernet-server
+client/ethernet-client
 
 # Prerequisites
 *.d

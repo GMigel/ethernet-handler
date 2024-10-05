@@ -16,8 +16,8 @@
 
 int main() {
 
-  // char *ip = "127.0.0.1";
-  char *ip = "172.17.0.2";
+  //  char *ip = "127.0.0.1";
+  char *ip = "172.17.0.12";
 
   int port = 17300;
 
@@ -39,8 +39,8 @@ int main() {
   addr.sin_port = port;
   addr.sin_addr.s_addr = inet_addr(ip);
 
-  connect(sock, (struct sockaddr *)&addr, sizeof(addr));
-  printf("Connected to the server.\n");
+  if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)))
+    printf("Connected to the server ip=%s\n", ip);
 
   bzero(buffer, 1024);
   strcpy(buffer, "HELLO, THIS IS CLIENT.");
