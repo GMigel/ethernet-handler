@@ -7,7 +7,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV LANG=en_US.utf8
 
 RUN apt-get update
-RUN apt-get install -y wget make nano ssh
+RUN apt-get install -y wget make gcc g++ gdb nano ssh git
 #g++-arm-linux-gnueabihf
 
 RUN apt-get install -y locales &&   \
@@ -17,6 +17,13 @@ RUN apt-get install -y locales &&   \
 RUN apt-get update && apt-get install -y    \
     iptables net-tools iproute2             \
     redis 
+
+# RUN apt-get update && apt-get install -y hiredis 
+RUN git clone http://github.com/redis/hiredis
+RUN cd hiredis && \
+    make &&\
+    make install &&\
+    ldconfig
 
     # journalctl                              \
     # systemd

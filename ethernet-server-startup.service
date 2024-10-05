@@ -3,7 +3,7 @@
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 # export LD_LIBRARY_PATH=
 
-DAEMON=/home/ethernet-server/server/ethernet-server-build-start.sh
+DAEMON=/home/ethernet-handler/server/ethernet-server-build-start.sh
 
 OPTIONS=""
 # EXTRA_OPTIONS=$(echo "" | sed '')

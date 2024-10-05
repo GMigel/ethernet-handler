@@ -1,0 +1,169 @@
+root@c541c484522a:/home/ethernet-handler# top
+
+top - 04:44:09 up  1:01,  0 users,  load average: 0.20, 0.31, 0.35
+Tasks:   3 total,   1 running,   2 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  0.5 us,  0.3 sy,  0.0 ni, 99.2 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+KiB Mem : 16040324 total,  4773436 free,  4847904 used,  6418984 buff/cache
+KiB Swap:  2097148 total,  2097148 free,        0 used.  9754192 avail Mem 
+
+    PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+  COMMAND                                                                                                                 
+      1 root      20   0    2496   1280   1280 S   0.0  0.0   0:00.01 sh                                                                                                                      
+      7 root      20   0    5860   3456   3328 S   0.0  0.0   0:00.00 bash                                                                                                                    
+     30 root      20   0    7260   2944   2688 R   0.0  0.0   0:00.00 top                                                                                                                     
+
+root@c541c484522a:/home/ethernet-handler# 
+root@c541c484522a:/home/ethernet-handler# systemd
+Trying to run as user instance, but the system has not been booted with systemd.
+root@c541c484522a:/home/ethernet-handler# ll /etc/sys
+sysctl.conf  sysctl.d/    systemd/     
+root@c541c484522a:/home/ethernet-handler# ll /etc/systemd/system/
+total 32
+drwxr-xr-x 1 root root 4096 Sep 30 14:32 ./
+drwxr-xr-x 1 root root 4096 Sep 30 14:31 ../
+lrwxrwxrwx 1 root root   44 Sep 30 14:31 dbus-org.freedesktop.resolve1.service -> /lib/systemd/system/systemd-resolved.service
+drwxr-xr-x 2 root root 4096 Sep 30 14:31 getty.target.wants/
+drwxr-xr-x 1 root root 4096 Sep 30 14:32 multi-user.target.wants/
+lrwxrwxrwx 1 root root   40 Sep 30 14:32 redis.service -> /lib/systemd/system/redis-server.service
+lrwxrwxrwx 1 root root   31 Sep 30 14:31 sshd.service -> /lib/systemd/system/ssh.service
+drwxr-xr-x 2 root root 4096 Sep 30 14:31 sysinit.target.wants/
+drwxr-xr-x 2 root root 4096 May 30  2023 timers.target.wants/
+Alias=redis.service
+root@c541c484522a:/home/ethernet-handler# 
+root@c541c484522a:/home/ethernet-handler# 
+root@c541c484522a:/home/ethernet-handler# 
+root@c541c484522a:/home/ethernet-handler# 
+root@c541c484522a:/home/ethernet-handler# 
+root@c541c484522a:/home/ethernet-handler# cat /etc/systemd/system/sshd.service 
+[Unit]
+Description=OpenBSD Secure Shell server
+After=network.target auditd.service
+ConditionPathExists=!/etc/ssh/sshd_not_to_be_run
+
+[Service]
+EnvironmentFile=-/etc/default/ssh
+ExecStartPre=/usr/sbin/sshd -t
+ExecStart=/usr/sbin/sshd -D $SSHD_OPTS
+ExecReload=/usr/sbin/sshd -t
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+RestartPreventExitStatus=255
+Type=notify
+RuntimeDirectory=sshd
+RuntimeDirectoryMode=0755
+
+[Install]
+WantedBy=multi-user.target
+Alias=sshd.service
+root@c541c484522a:/home/ethernet-handler# 
+root@c541c484522a:/home/ethernet-handler# 
+root@c541c484522a:/home/ethernet-handler# 
+root@c541c484522a:/home/ethernet-handler# 
+root@c541c484522a:/home/ethernet-handler# 
+root@c541c484522a:/home/ethernet-handler# cat /etc/systemd/system/redis.service 
+[Unit]
+Description=Advanced key-value store
+After=network.target
+Documentation=http://redis.io/documentation, man:redis-server(1)
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/redis-server /etc/redis/redis.conf
+ExecStop=/bin/kill -s TERM $MAINPID
+PIDFile=/var/run/redis/redis-server.pid
+TimeoutStopSec=0
+Restart=always
+User=redis
+Group=redis
+RuntimeDirectory=redis
+RuntimeDirectoryMode=2755
+
+UMask=007
+PrivateTmp=yes
+LimitNOFILE=65535
+PrivateDevices=yes
+ProtectHome=yes
+ReadOnlyDirectories=/
+ReadWriteDirectories=-/var/lib/redis
+ReadWriteDirectories=-/var/log/redis
+ReadWriteDirectories=-/var/run/redis
+
+NoNewPrivileges=true
+CapabilityBoundingSet=CAP_SETGID CAP_SETUID CAP_SYS_RESOURCE
+MemoryDenyWriteExecute=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictNamespaces=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+# redis-server can write to its own config file when in cluster mode so we
+# permit writing there by default. If you are not using this feature, it is
+# recommended that you replace the following lines with "ProtectSystem=full".
+ProtectSystem=true
+ReadWriteDirectories=-/etc/redis
+
+[Install]
+WantedBy=multi-user.target
+Alias=redis.service
+root@c541c484522a:/home/ethernet-handler# 
+root@c541c484522a:/home/ethernet-handler# 
+root@c541c484522a:/home/ethernet-handler# 
+root@c541c484522a:/home/ethernet-handler# 
+root@c541c484522a:/home/ethernet-handler# 
+root@c541c484522a:/home/ethernet-handler# cat /etc/systemd/system/
+dbus-org.freedesktop.resolve1.service  multi-user.target.wants/               sshd.service                           timers.target.wants/
+getty.target.wants/                    redis.service                          sysinit.target.wants/                  
+root@c541c484522a:/home/ethernet-handler# cat /etc/systemd/system/dbus-org.freedesktop.resolve1.service 
+#  SPDX-License-Identifier: LGPL-2.1+
+#
+#  This file is part of systemd.
+#
+#  systemd is free software; you can redistribute it and/or modify it
+#  under the terms of the GNU Lesser General Public License as published by
+#  the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+
+[Unit]
+Description=Network Name Resolution
+Documentation=man:systemd-resolved.service(8)
+Documentation=https://www.freedesktop.org/wiki/Software/systemd/resolved
+Documentation=https://www.freedesktop.org/wiki/Software/systemd/writing-network-configuration-managers
+Documentation=https://www.freedesktop.org/wiki/Software/systemd/writing-resolver-clients
+DefaultDependencies=no
+After=systemd-sysusers.service systemd-networkd.service
+Before=network.target nss-lookup.target shutdown.target
+Conflicts=shutdown.target
+Wants=nss-lookup.target
+
+[Service]
+Type=notify
+Restart=always
+RestartSec=0
+ExecStart=!!/lib/systemd/systemd-resolved
+WatchdogSec=3min
+User=systemd-resolve
+CapabilityBoundingSet=CAP_SETPCAP CAP_NET_RAW CAP_NET_BIND_SERVICE
+AmbientCapabilities=CAP_SETPCAP CAP_NET_RAW CAP_NET_BIND_SERVICE
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectControlGroups=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+MemoryDenyWriteExecute=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_UNIX AF_NETLINK AF_INET AF_INET6
+SystemCallFilter=~@clock @cpu-emulation @debug @keyring @module @mount @obsolete @raw-io @reboot @swap
+SystemCallArchitectures=native
+LockPersonality=yes
+RuntimeDirectory=systemd/resolve
+RuntimeDirectoryPreserve=yes
+
+[Install]
+WantedBy=multi-user.target
+Alias=dbus-org.freedesktop.resolve1.service
+root@c541c484522a:/home/ethernet-handler# 

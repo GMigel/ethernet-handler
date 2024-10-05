@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# cd /home/ethernet-server/server
+cd /home/ethernet-handler/server/
 make clean
 make
 ./ethernet-server

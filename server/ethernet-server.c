@@ -83,6 +83,11 @@ int redis_publish(char *buf, ssize_t length) {
   redisContext *ctx;
   redisReply *reply;
   const char *redis_hostname = "127.0.0.1";
+  (void) ctx;
+  (void) reply;
+  (void) redis_hostname;
+  (void) buf;
+  (void) length;
 
   return EXIT_SUCCESS;
 }
