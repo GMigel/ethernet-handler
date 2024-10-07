@@ -16,9 +16,7 @@
 
 int main() {
 
-  //  char *ip = "127.0.0.1";
-  char *ip = "172.17.0.12";
-
+  char *ip = "173.18.0.12";
   int port = 17300;
 
   int sock;
@@ -32,7 +30,7 @@ int main() {
     perror("[-]Socket error");
     exit(1);
   }
-  printf("[+]TCP server socket created.\n");
+  //  printf("[+]TCP server socket created.\n");
 
   memset(&addr, '\0', sizeof(addr));
   addr.sin_family = AF_INET;
@@ -40,10 +38,10 @@ int main() {
   addr.sin_addr.s_addr = inet_addr(ip);
 
   if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)))
-    printf("Connected to the server ip=%s\n", ip);
+    printf("Connecting to the server ip=%s ...\n", ip);
 
   bzero(buffer, 1024);
-  strcpy(buffer, "HELLO, THIS IS CLIENT.");
+  strcpy(buffer, "HELLO, THIS IS CLIENT ...");
   printf("Client: %s\n", buffer);
   send(sock, buffer, strlen(buffer), 0);
 

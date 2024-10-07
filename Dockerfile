@@ -25,17 +25,10 @@ RUN cd hiredis && \
     make install &&\
     ldconfig
 
-    # journalctl                              \
-    # systemd
-    # tcpdump
-    # python3 python3-pip           \
-    # tmux htop 
-
-
-    WORKDIR /home/ethernet-handler
+WORKDIR /home/ethernet-handler
 
 # Copy app to container
-COPY ./ethernet-server-startup.service /etc/init.d/
+COPY ./ethernet-server-star.sh /etc/init.d/
 
 # During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
 
@@ -43,6 +36,8 @@ COPY ./ethernet-server-startup.service /etc/init.d/
 # CMD ["start.sh"]
 
 # CMD service ssh restart && bash
-CMD service ethernet-server-startup.service restart        # && bash
+# CMD service ethernet-server-startup.service restart        # && bash
+
+CMD /etc/init.d/ethernet-server-star.sh restart
 
 CMD /bin/bash
