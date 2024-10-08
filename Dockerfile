@@ -28,7 +28,7 @@ RUN cd hiredis && \
 WORKDIR /home/ethernet-handler
 
 # Copy app to container
-COPY ./ethernet-server-star.sh /etc/init.d/
+COPY ./ethernet-server-start.sh /etc/init.d/
 
 # During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
 
@@ -38,6 +38,6 @@ COPY ./ethernet-server-star.sh /etc/init.d/
 # CMD service ssh restart && bash
 # CMD service ethernet-server-startup.service restart        # && bash
 
-CMD /etc/init.d/ethernet-server-star.sh restart
+CMD /etc/init.d/ethernet-server-start.sh restart
 
 CMD /bin/bash

@@ -15,9 +15,7 @@
 #include <string.h>
 #include <unistd.h>
 
-int 
-
-redis_publish(char *buf, ssize_t length);
+int redis_publish(char *buf, ssize_t length);
 
 // C program to display hostname
 // and IP address
@@ -33,8 +31,7 @@ redis_publish(char *buf, ssize_t length);
 
 #include "in.h"
 
-// #include
-// "/home/mike/projects/L29-MFD-12-GORIZONT-render/source/apps/l29/model/data/in.h"
+// #include "/home/mike/projects/L29-MFD-12-GORIZONT-render/source/apps/l29/model/data/in.h"
 
 // https://www.geeksforgeeks.org/c-program-display-hostname-ip-address/
 // https://www.geeksforgeeks.org/tcp-server-client-implementation-in-c/
@@ -44,191 +41,209 @@ redis_publish(char *buf, ssize_t length);
 // int main_(int argc, char **argv);
 
 int main(int argc, char **argv) {
+  (void)argc;
+  (void)argv;
 
-  //  int err = main_(argc, argv);
-  //  (void)err;
-  //  return (EXIT_SUCCESS);
+  //  char *tcp_server_ip = "127.0.0.1";
+  //  char *tcp_server_ip = "172.17.0.12";
 
+#define PORT1 17300
+#define BUFSIZE 1500
   char hostbuffer[256];
   struct hostent *host_entry;
-  int hostname;
+  int hostname, fd;
+  unsigned int namelen;
   struct in_addr **addr_list;
   char *IPbuffer;
+  struct sockaddr_in serveraddr; /** server's addr */
+  struct sockaddr_in clientaddr; /** client addr */
+  struct hostent *hostp;         /** client host info */
+  char *hostaddrp;               /** dotted decimal host addr string */
+  int clientlen;                 /** byte size of client's address */
+  int n;                         /** message byte size */
+  int sockfd;                    /** socket */
+  int optval;                    /** flag value for setsockopt */
+  int portno;                    /** port to listen on */
+  //  int server_sock, client_sock;
+  //  socklen_t addr_size;
 
-  hostname = gethostname(
-      hostbuffer, sizeof(hostbuffer));
+  portno = PORT1;
+  char buf[BUFSIZE];
+
+  hostname = gethostname(hostbuffer, sizeof(hostbuffer));
   if (hostname == -1) {
     perror("gethostname error");
     exit(1);
   }
 
-  host_entry =
-      gethostbyname(hostbuffer);
+  host_entry = gethostbyname(hostbuffer);
   if (host_entry == NULL) {
-    perror("gethostbyname error");
+    perror("getHostByName error");
     exit(1);
   }
 
-  addr_list =
-      (struct in_addr **)
-          host_entry->h_addr_list;
+  addr_list = (struct in_addr **)host_entry->h_addr_list;
 
-  IPbuffer = inet_ntoa(*(
-      (struct in_addr *)
-          host_entry->h_addr_list[0]));
+  IPbuffer = inet_ntoa(*((struct in_addr *)host_entry->h_addr_list[0]));
 
-  for (int i = 0; addr_list[i] != NULL;
-       i++) {
-    printf("IP address %d: %s\n", i + 1,
-           inet_ntoa(*addr_list[i]));
+  for (int i = 0; addr_list[i] != NULL; i++) {
+    printf("IP address %d: %s\n", i + 1, inet_ntoa(*addr_list[i]));
   }
   printf("Host IP: %s\n", IPbuffer);
 
-  //  char *tcp_server_ip = "127.0.0.1";
-  //  char *tcp_server_ip =
-  //  "172.17.0.12";
-  int port = 17300;
-
-  int server_sock, client_sock;
-  struct sockaddr_in server_addr,
-      client_addr;
-  socklen_t addr_size;
-  char buffer[1024];
-  int n;
-  ssize_t len;
-
   //  server_sock = socket(AF_INET,
   //  SOCK_STREAM, 0);
-  server_sock =
-      socket(PF_INET, SOCK_STREAM,
-             IPPROTO_TCP);
-
-  if (server_sock < 0) {
-    perror("[-]Socket error");
+  sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP); /** socket: create the parent socket */
+  if (sockfd < 0) {
+    perror("ERROR opening socket\n");
     exit(1);
   }
-  //  printf("[+]TCP server socket
-  //  created.\n");
 
-  memset(&server_addr, '\0',
-         sizeof(server_addr));
-  server_addr.sin_family = AF_INET;
-  server_addr.sin_addr.s_addr =
-      htonl(INADDR_ANY);
-  inet_aton(
-      IPbuffer,
-      (struct in_addr *)&server_addr
-          .sin_addr.s_addr);
-  //  server_addr.sin_port = htons(179);
-  server_addr.sin_port = port;
+  /** setsockopt: Handy debugging trick that lets us rerun the server immediately after we kill it,
+   * otherwise we have to wait about 20 secs. Eliminates "ERROR on binding: Address already in use" error.
+   */
+  optval = 1;
+  setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const void *)&optval, sizeof(int));
 
-  //  IPbuffer = inet_ntoa(*((struct
-  //  in_addr
-  //  *)host_entry->h_addr_list[0]));
+  /** build the server's Internet address  */
+  //  memset(&serveraddr, '\0', sizeof(serveraddr));
+  bzero((char *)&serveraddr, sizeof(serveraddr));
+  serveraddr.sin_family = AF_INET;
+  inet_aton(IPbuffer, (struct in_addr *)&serveraddr.sin_addr.s_addr); /** Get host's IP */
+  serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);                     /** Redefine IP to '0.0.0.0' */
+  serveraddr.sin_port = htons((unsigned short)portno);
 
-  n = bind(
-      server_sock,
-      (struct sockaddr *)&server_addr,
-      sizeof(server_addr));
-  if (n < 0) {
+  //  IPbuffer = inet_ntoa(*((struct in_addr *)host_entry->h_addr_list[0]));
+
+  /** bind: associate the parent socket with a port */
+  if (bind(sockfd, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0) {
     perror("[-]Bind error");
-    exit(1);
+    exit(2);
   }
 
   char stripv4[INET_ADDRSTRLEN];
-  const char *result = inet_ntop(
-      AF_INET,
-      &server_addr.sin_addr.s_addr,
-      stripv4, INET_ADDRSTRLEN);
+  const char *result = inet_ntop(AF_INET, &serveraddr.sin_addr.s_addr, stripv4, INET_ADDRSTRLEN);
   if (result == NULL) {
     perror("inet_ntop");
     //    return 1;
   }
-  printf("[+]Bind to the port number: "
-         "%s\t%d\n",
-         stripv4, port);
+  printf("[+]Bind to the socket: %s:%d\n", stripv4, portno);
 
-  listen(server_sock, 5);
-  printf("Listening ...\n");
+  /* Find out what port was really assigned and print it */
+  namelen = sizeof(serveraddr);
+  fd = socket(AF_INET, SOCK_STREAM, 0);
+  if (getsockname(fd, (struct sockaddr *)&serveraddr, &namelen) < 0) {
+    perror("getsockname()");
+    exit(3);
+  }
+  printf("Port assigned is %d\n", ntohs(serveraddr.sin_port));
+
+  /* Find out what port was really assigned and print it */
+  //  namelen = sizeof(serveraddr);
+  //  if (getsockname(s, (struct sockaddr *)&serveraddr, &namelen) < 0) {
+  //    perror("getsockname()");
+  //    exit(3);
+  //  }
+  //  printf("Port assigned is %d\n", ntohs(serveraddr.sin_port));
+
+  clientlen = sizeof(clientaddr);
 
   while (1) {
-    addr_size = sizeof(client_addr);
-    client_sock = accept(
-        server_sock,
-        (struct sockaddr *)&client_addr,
-        &addr_size);
-    printf("[+]Client connected.\n");
+    //    addr_size = sizeof(clientaddr);
+    //    client_sock = accept(server_sock, (struct sockaddr *)&clientaddr, &addr_size);
+    //    printf("[+]Client connected.\n");
 
-    bzero(buffer, 1024);
-    len = recv(client_sock, buffer,
-               sizeof(buffer), 0);
-    printf("Client: %s\t%ld\n", buffer,
-           len);
+    /** recvfrom: receive a UDP datagram from a client */
+    bzero(buf, BUFSIZE);
+    n = recvfrom(sockfd, buf, BUFSIZE, 0, (struct sockaddr *)&clientaddr, (socklen_t *)&clientlen);
+    if (n < 0)
+      perror("ERROR in recvfrom");
 
-    bzero(buffer, 1024);
-    //    strcpy(buffer, "HI, THIS IS
-    //    SERVER. HAVE A NICE DAY!!!");
-    printf("Server: %s\n", buffer);
-    send(client_sock, buffer,
-         strlen(buffer), 0);
-    redis_publish(buffer, len);
+    /** gethostbyaddr: determine who sent the datagram */
+    hostp = gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr, sizeof(clientaddr.sin_addr.s_addr), AF_INET);
+    if (hostp == NULL)
+      perror("ERROR on gethostbyaddr");
+    hostaddrp = inet_ntoa(clientaddr.sin_addr);
+    if (hostaddrp == NULL)
+      perror("ERROR on inet_ntoa\n");
+    printf("server received datagram from %s (%s)\n", hostp->h_name, hostaddrp);
+    printf("server received %d/%d bytes: %s\n", (int)strlen(buf), n, buf);
 
-    close(client_sock);
-    printf(
-        "[+]Client disconnected.\n\n");
+    //    /** sendto: echo the input back to the client */
+    //    n = sendto(sockfd, buf, strlen(buf), 0, (struct sockaddr *)&clientaddr, clientlen);
+    //    if (n < 0) error("ERROR in sendto");
+
+    //    if (len != -1) {
+    //      // printf("Client: %s\t%d\n", buffer, len);
+    //      for (int i = 0; i < len; i++)
+    //        printf("%02x", buffer[i]);
+
+    FILE *fptr;
+    if ((fptr = fopen("buffer.bin", "wb")) == NULL) {
+      printf("Error! opening file");
+      exit(EXIT_FAILURE);
+    } else {
+      fwrite(buf, n, 1, fptr);
+      fclose(fptr);
+    }
   }
+
+  //  bzero(buffer, 1024);
+  //  //    strcpy(buffer, "HI, THIS IS
+  //  //    SERVER. HAVE A NICE DAY!!!");
+  //  printf("Server: %s\n", buffer);
+  //  send(client_sock, buffer, strlen(buffer), 0);
+  //  close(client_sock);
+  //  printf("[+]Client disconnected.\n\n");
+  redis_publish(buf, n);
 
   return EXIT_SUCCESS;
 }
 
-int redis_publish(char *buf,
-                  ssize_t length) { /*{
-redisContext *ctx;
-redisReply *reply;
-const char *redis_hostname =
-"127.0.0.1"; (void)ctx; (void)reply;
-(void)redis_hostname;
-(void)buf;
-(void)length;
+int redis_publish(char *buf, ssize_t length) {
+  (void)buf;
+  (void)length;
+  /*{
+     redisContext *ctx;
+     redisReply *reply;
+     const char *redis_hostname =
+     "127.0.0.1"; (void)ctx; (void)reply;
+     (void)redis_hostname;
+     (void)buf;
+     (void)length;
 
-return EXIT_SUCCESS;
-}
+     return EXIT_SUCCESS;
+     }
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+     #include <stdio.h>
+     #include <stdlib.h>
+     #include <string.h>
 
-#include <hiredis/hiredis.h>
+     #include <hiredis/hiredis.h>
 
-// int main(int argctx, char **argv) {
-//
-https://www.tencentcloud.com/document/product/239/7046
-int main_(int argc, char **argv) {
-if (argc < 4) {
-printf("Usage: 192.xx.xx.195 6379
-instance_id password\n"); exit(0);
-}
-*/
+     // int main(int argctx, char **argv) {
+     //
+     https://www.tencentcloud.com/document/product/239/7046
+     int main_(int argc, char **argv) {
+     if (argc < 4) {
+     printf("Usage: 192.xx.xx.195 6379
+     instance_id password\n"); exit(0);
+     }
+     */
 
   redisContext *ctx;
   redisReply *reply;
 
-  const char *hostname =
-      "173.18.0.10"; // argv[1];
-  const int port =
-      6379; // atoi(argv[2]);
-  const char *password =
-      "111"; // argv[4];
+  const char *hostname = "173.18.0.10"; // argv[1];
+  const int port = 6379;                // atoi(argv[2]);
+  const char *password = "111";         // argv[4];
 
-  struct timeval timeout = {
-      1, 500000}; // 1.5 seconds
-  ctx = redisConnectWithTimeout(
-      hostname, port, timeout);
+  struct timeval timeout = {1, 500000}; // 1.5 seconds
+  ctx = redisConnectWithTimeout(hostname, port, timeout);
 
   // if (ctx == NULL || ctx->err) {
   if (ctx) {
-    printf("Connection error: %s\n",
-           ctx->errstr);
+    printf("Connection error: %s\n", ctx->errstr);
     redisFree(ctx);
   } else if (ctx->err) {
     printf("Connection error: can't "
@@ -238,8 +253,7 @@ instance_id password\n"); exit(0);
   //}
 
   /* AUTH */
-  reply = redisCommand(ctx, "AUTH %s",
-                       password);
+  reply = redisCommand(ctx, "AUTH %s", password);
   printf("AUTH: %s\n", reply->str);
   freeReplyObject(reply);
 
@@ -249,9 +263,7 @@ instance_id password\n"); exit(0);
   freeReplyObject(reply);
 
   /* Set a key */
-  reply = redisCommand(ctx, "SET %s %s",
-                       "name",
-                       "credis_test");
+  reply = redisCommand(ctx, "SET %s %s", "name", "credis_test");
   printf("SET: %s\n", reply->str);
   freeReplyObject(reply);
 

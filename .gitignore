@@ -5,6 +5,7 @@ Debug/ethernet_server.o
 
 server/ethernet-server
 client/ethernet-client
+server/buffer.bin
 
 # Prerequisites
 *.d
