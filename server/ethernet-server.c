@@ -30,6 +30,7 @@ int redis_publish(char *buf, ssize_t length);
 #include <unistd.h>
 
 #include "in.h"
+#include "packs.h"
 
 // #include "/home/mike/projects/L29-MFD-12-GORIZONT-render/source/apps/l29/model/data/in.h"
 
@@ -60,7 +61,7 @@ int main(int argc, char **argv) {
   struct hostent *hostp;         /** client host info */
   char *hostaddrp;               /** dotted decimal host addr string */
   int clientlen;                 /** byte size of client's address */
-  int n;                         /** message byte size */
+  int num;                       /** message byte size */
   int sockfd;                    /** socket */
   int optval;                    /** flag value for setsockopt */
   int portno;                    /** port to listen on */
@@ -109,8 +110,8 @@ int main(int argc, char **argv) {
   //  memset(&serveraddr, '\0', sizeof(serveraddr));
   bzero((char *)&serveraddr, sizeof(serveraddr));
   serveraddr.sin_family = AF_INET;
-  inet_aton(IPbuffer, (struct in_addr *)&serveraddr.sin_addr.s_addr); /** Get host's IP */
-  serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);                     /** Redefine IP to '0.0.0.0' */
+  //  inet_aton(IPbuffer, (struct in_addr *)&serveraddr.sin_addr.s_addr); /** Get host's IP */
+  serveraddr.sin_addr.s_addr = htonl(INADDR_ANY); /** Redefine IP to '0.0.0.0' */
   serveraddr.sin_port = htons((unsigned short)portno);
 
   //  IPbuffer = inet_ntoa(*((struct in_addr *)host_entry->h_addr_list[0]));
@@ -136,7 +137,7 @@ int main(int argc, char **argv) {
     perror("getsockname()");
     exit(3);
   }
-  printf("Port assigned is %d\n", ntohs(serveraddr.sin_port));
+  //  printf("Port assigned is %d\n", ntohs	(serveraddr.sin_port));
 
   /* Find out what port was really assigned and print it */
   //  namelen = sizeof(serveraddr);
@@ -155,8 +156,8 @@ int main(int argc, char **argv) {
 
     /** recvfrom: receive a UDP datagram from a client */
     bzero(buf, BUFSIZE);
-    n = recvfrom(sockfd, buf, BUFSIZE, 0, (struct sockaddr *)&clientaddr, (socklen_t *)&clientlen);
-    if (n < 0)
+    num = recvfrom(sockfd, buf, BUFSIZE, 0, (struct sockaddr *)&clientaddr, (socklen_t *)&clientlen);
+    if (num < 0)
       perror("ERROR in recvfrom");
 
     /** gethostbyaddr: determine who sent the datagram */
@@ -166,8 +167,7 @@ int main(int argc, char **argv) {
     hostaddrp = inet_ntoa(clientaddr.sin_addr);
     if (hostaddrp == NULL)
       perror("ERROR on inet_ntoa\n");
-    printf("server received datagram from %s (%s)\n", hostp->h_name, hostaddrp);
-    printf("server received %d/%d bytes: %s\n", (int)strlen(buf), n, buf);
+    printf("server received datagram from %s (%s) %d bytes\n", hostp->h_name, hostaddrp, num);
 
     //    /** sendto: echo the input back to the client */
     //    n = sendto(sockfd, buf, strlen(buf), 0, (struct sockaddr *)&clientaddr, clientlen);
@@ -183,19 +183,12 @@ int main(int argc, char **argv) {
       printf("Error! opening file");
       exit(EXIT_FAILURE);
     } else {
-      fwrite(buf, n, 1, fptr);
+      fwrite(buf, num, 1, fptr);
       fclose(fptr);
     }
-  }
 
-  //  bzero(buffer, 1024);
-  //  //    strcpy(buffer, "HI, THIS IS
-  //  //    SERVER. HAVE A NICE DAY!!!");
-  //  printf("Server: %s\n", buffer);
-  //  send(client_sock, buffer, strlen(buffer), 0);
-  //  close(client_sock);
-  //  printf("[+]Client disconnected.\n\n");
-  redis_publish(buf, n);
+    redis_publish(buf, num);
+  }
 
   return EXIT_SUCCESS;
 }
@@ -203,68 +196,49 @@ int main(int argc, char **argv) {
 int redis_publish(char *buf, ssize_t length) {
   (void)buf;
   (void)length;
-  /*{
-     redisContext *ctx;
-     redisReply *reply;
-     const char *redis_hostname =
-     "127.0.0.1"; (void)ctx; (void)reply;
-     (void)redis_hostname;
-     (void)buf;
-     (void)length;
-
-     return EXIT_SUCCESS;
-     }
-
-     #include <stdio.h>
-     #include <stdlib.h>
-     #include <string.h>
-
-     #include <hiredis/hiredis.h>
-
-     // int main(int argctx, char **argv) {
-     //
-     https://www.tencentcloud.com/document/product/239/7046
-     int main_(int argc, char **argv) {
-     if (argc < 4) {
-     printf("Usage: 192.xx.xx.195 6379
-     instance_id password\n"); exit(0);
-     }
-     */
-
   redisContext *ctx;
   redisReply *reply;
 
-  const char *hostname = "173.18.0.10"; // argv[1];
-  const int port = 6379;                // atoi(argv[2]);
-  const char *password = "111";         // argv[4];
+  udp_pack_broadcast_part *udp_part1 = (udp_pack_broadcast_part *)buf;
+
+  const char *hostname = "173.18.0.10";
+  const int port = 6379;
+  //  const char *password = "111";
 
   struct timeval timeout = {1, 500000}; // 1.5 seconds
   ctx = redisConnectWithTimeout(hostname, port, timeout);
 
-  // if (ctx == NULL || ctx->err) {
-  if (ctx) {
-    printf("Connection error: %s\n", ctx->errstr);
-    redisFree(ctx);
-  } else if (ctx->err) {
-    printf("Connection error: can't "
-           "allocate redis context\n");
+  if (ctx == NULL || ctx->err) {
+    if (ctx) {
+      printf("Connection error: %s\n", ctx->errstr);
+      redisFree(ctx);
+    } else if (ctx->err) {
+      printf("Connection error: can't allocate redis context\n");
+    }
+    exit(1);
   }
-  exit(1);
-  //}
 
   /* AUTH */
-  reply = redisCommand(ctx, "AUTH %s", password);
-  printf("AUTH: %s\n", reply->str);
-  freeReplyObject(reply);
+  //  reply = redisCommand(ctx, "AUTH %s", password);
+  //  printf("AUTH: %s\n", reply->str);
+  //  freeReplyObject(reply);
 
-  /* PING server */
-  reply = redisCommand(ctx, "PING");
-  printf("PING: %s\n", reply->str);
-  freeReplyObject(reply);
+  //  /* PING server */
+  //  reply = redisCommand(ctx, "PING");
+  //  printf("PING: %s\n", reply->str);
+  //  freeReplyObject(reply);
 
   /* Set a key */
-  reply = redisCommand(ctx, "SET %s %s", "name", "credis_test");
-  printf("SET: %s\n", reply->str);
+  reply = redisCommand(ctx, "SET %s %d", "pitch",
+                       udp_part1->pitch); // pitch; 155 Угол тангажа: от -90 до 90 с шагом 4.23751771450042724609375E-08
+                                          // и значением по-умолчанию 0
+  printf("SET: 'pitch' %d, REPLY: %s\n", udp_part1->pitch, reply->str);
+  freeReplyObject(reply);
+
+  reply = redisCommand(
+      ctx, "SET %s %d", "roll",
+      udp_part1->roll); // 159 Угол крена:  от -180 до 180 с шагом 8.42846930027008E-08 и значением по-умолчанию 0
+  printf("SET: 'roll' %d, REPLY: %s\n", udp_part1->roll, reply->str);
   freeReplyObject(reply);
 
   /* Try a GET  */

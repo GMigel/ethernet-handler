@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../shared/exchange.h"
+#include "exchange.h"
 #include "types.h"
 
 #ifdef __cplusplus

@@ -12,8 +12,10 @@ extern "C" {
 
 // Форматы пакетов от ВПНП к МФИ
 
+typedef struct udp_pack_broadcast_part udp_pack_broadcast_part;
+
 /* clang-format off */
-struct ODS_DATA_STRUCT_udp_pack_broadcast_part{
+struct udp_pack_broadcast_part{
     uint16_t preface_1; 		// 1		FEDC
     uint16_t preface_2; 		// 3		1000
     uint16_t preface_3; 		// 5		0000
@@ -493,7 +495,7 @@ struct ODS_DATA_STRUCT_udp_pack_broadcast_part{
 };
 
 
-struct ODS_DATA_STRUCT_udp_pack_ext_part{
+struct udp_pack_ext_part{
     uint16_t header_1; 		// 1		FEDC
     uint16_t header_2; 		// 3		1000
     uint16_t header_3; 		// 5		0000
@@ -758,7 +760,7 @@ struct ODS_DATA_STRUCT_udp_pack_ext_part{
 };
 
 
-struct ODS_DATA_STRUCT_udp_pack_broadcast_l29_tvs2{
+struct udp_pack_broadcast_l29_tvs2{
     uint16_t preface_1; 		// 1		FEDC
     uint16_t preface_2; 		// 3		1000
     uint16_t preface_3; 		// 5		0000
@@ -1104,7 +1106,7 @@ struct ODS_DATA_STRUCT_udp_pack_broadcast_l29_tvs2{
 };
 
 
-struct ODS_DATA_STRUCT_udp_pack_ext_tvs2{
+struct udp_pack_ext_tvs2{
     uint16_t preface_1; 		// 1		FEDC
     uint16_t preface_2; 		// 3		1000
     uint16_t preface_3; 		// 5		0000
@@ -1369,7 +1371,7 @@ struct ODS_DATA_STRUCT_udp_pack_ext_tvs2{
 };
 
 
-struct ODS_DATA_STRUCT_udp_pack_ext_l29{
+struct udp_pack_ext_l29{
     uint16_t preface_1; 		// 1		FEDC
     uint16_t preface_2; 		// 3		1000
     uint16_t preface_3; 		// 5		0000
