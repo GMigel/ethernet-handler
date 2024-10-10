@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# compile static library
+# gcc -Wall -c *.c && ar -cvq libdie_with_error.a die_with_error.o
+
+gcc -o server server.c -L. -ldie_with_error
