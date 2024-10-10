@@ -14,10 +14,14 @@
 #include <string.h>
 #include <unistd.h>
 
+#define SERVER_IP "127.0.0.1"
+// #define SERVER_IP "173.18.0.12"
+#define PORT 17300
+
 int main() {
 
-  char *ip = "173.18.0.12";
-  int port = 17300;
+  char *ip = SERVER_IP;
+  int port = PORT;
 
   int sock;
   struct sockaddr_in addr;
