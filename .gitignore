@@ -7,6 +7,11 @@ server/ethernet-server
 client/ethernet-client
 server/buffer.bin
 
+clnt/client
+clnt/client.o
+srv/server
+srv/server.o
+
 # Prerequisites
 *.d
 
